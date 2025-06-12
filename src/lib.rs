@@ -28,11 +28,3 @@ impl ParserEmitter {
         Ok(())
     }
 }
-
-#[wasm_bindgen]
-pub fn send_to_js(callback: js_sys::Function) -> Result<(), JsValue> {
-    let this = JsValue::NULL;
-    let message = JsValue::from_str("Hello from Rust!");
-    callback.call1(&this, &message)?;
-    Ok(())
-}
