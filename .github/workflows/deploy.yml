@@ -28,14 +28,11 @@ jobs:
 
       - name: Organize files
         run: |
-          mkdir output
-          cp index.html output/
-          cp -r pkg output/
-          rm output/pkg/.gitignore
+          rm pkg/.gitignore
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         if: success() && github.event_name != 'pull_request'
         with:
           branch: gh-pages
-          folder: output
+          folder: pkg
