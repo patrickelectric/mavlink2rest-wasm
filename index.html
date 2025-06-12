@@ -2,24 +2,176 @@
 <html>
 <head>
     <title>WASM Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .control-panel {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        select, button {
+            margin: 5px;
+            padding: 8px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            min-height: 100px;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-    <h1>WebAssembly Test</h1>
+    <h1>Serial Port WebAssembly Test</h1>
+
+    <div class="control-panel">
+        <select id="portSelect">
+            <option value="">Select a port</option>
+        </select>
+
+        <select id="baudRate">
+            <option value="9600">9600</option>
+            <option value="19200">19200</option>
+            <option value="38400">38400</option>
+            <option value="57600">57600</option>
+            <option value="115200" selected>115200</option>
+        </select>
+
+        <button id="openButton">Open Port</button>
+        <button id="closeButton" disabled>Close Port</button>
+    </div>
+
     <div id="output"></div>
 
     <script type="module">
         import init, { ParserEmitter } from './pkg/mavlink2rest_wasm.js';
 
+        let port = null;
+        let reader = null;
+        let emitter = null;
+
         async function run() {
             await init();
+            emitter = new ParserEmitter();
 
-            // Create the ParserEmitter object
-            const emitter = new ParserEmitter();
-            emitter.parser("Hello");
-            emitter.emit((message) => {
-                console.log("Emit from Rust:", message);
-                document.getElementById('output').textContent = `Emit: ${message}`;
-            });
+            // Get DOM elements
+            const portSelect = document.getElementById('portSelect');
+            const baudRate = document.getElementById('baudRate');
+            const openButton = document.getElementById('openButton');
+            const closeButton = document.getElementById('closeButton');
+            const output = document.getElementById('output');
+
+            // Function to update available ports
+            async function updatePorts() {
+                try {
+                    const ports = await navigator.serial.getPorts();
+                    portSelect.innerHTML = '<option value="">Select a port</option>';
+                    ports.forEach((port, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.text = `Port ${index + 1}`;
+                        portSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error getting ports:', error);
+                }
+            }
+
+            // Request port access
+            async function requestPort() {
+                try {
+                    if (!port) {
+                        port = await navigator.serial.requestPort();
+                    }
+                    await updatePorts();
+                } catch (error) {
+                    console.error('Error requesting port:', error);
+                }
+            }
+
+            // Open port and start reading
+            async function openPort() {
+                try {
+                    if (!port) {
+                        throw new Error('No port selected. Please click on the port selector first.');
+                    }
+
+                    console.log(port, port.readable, port.writable, port.getInfo());
+                    await port.open({ baudRate: parseInt(baudRate.value) });
+                    reader = port.readable.getReader();
+
+                    openButton.disabled = true;
+                    closeButton.disabled = false;
+                    portSelect.disabled = true;
+                    baudRate.disabled = true;
+
+                    // Read data
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        console.log(value, done);
+                        if (done) {
+                            break;
+                        }
+                        // Pass the raw bytes to the parser
+                        emitter.parser(value);
+                        emitter.emit((size) => {
+                            const timestamp = new Date().toISOString();
+                            output.textContent = `[${timestamp}] Received ${size} bytes\n` + output.textContent;
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error opening port:', error);
+                    alert('Error opening port: ' + error.message);
+                }
+            }
+
+            // Close port
+            async function closePort() {
+                try {
+                    if (reader) {
+                        await reader.cancel();
+                        reader = null;
+                    }
+                    if (port) {
+                        await port.close();
+                        port = null;
+                    }
+
+                    openButton.disabled = false;
+                    closeButton.disabled = true;
+                    portSelect.disabled = false;
+                    baudRate.disabled = false;
+                } catch (error) {
+                    console.error('Error closing port:', error);
+                }
+            }
+
+            // Event listeners
+            portSelect.addEventListener('click', requestPort);
+            openButton.addEventListener('click', openPort);
+            closeButton.addEventListener('click', closePort);
+
+            // Initial port list update
+            updatePorts();
         }
 
         run();
