@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WASM Test</title>
+</head>
+<body>
+    <h1>WebAssembly Test</h1>
+    <div id="output"></div>
+
+    <script type="module">
+        import init, { ParserEmitter } from './pkg/mavlink2rest_wasm.js';
+
+        async function run() {
+            await init();
+
+            // Create the ParserEmitter object
+            const emitter = new ParserEmitter();
+            emitter.parser("Hello");
+            emitter.emit((message) => {
+                console.log("Emit from Rust:", message);
+                document.getElementById('output').textContent = `Emit: ${message}`;
+            });
+        }
+
+        run();
+    </script>
+</body>
+</html>
