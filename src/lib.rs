@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use mavlink::{read_versioned_msg, write_versioned_msg, Message, MavHeader, MavlinkVersion};
+use mavlink::{read_versioned_msg, write_versioned_msg, MavHeader, MavlinkVersion};
 use serde::{Deserialize, Serialize};
 use js_sys::Uint8Array;
 
