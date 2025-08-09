@@ -2,6 +2,9 @@
 
 This is a minimal Rust WebAssembly project that exposes a `ParserEmitter` object to JavaScript. You can send a string from JS to Rust and have Rust call back into JS with the string plus an exclamation mark.
 
+## Test it
+- https://patrickelectric.work/mavlink2rest-wasm/
+
 ## Prerequisites
 - [Rust](https://www.rust-lang.org/tools/install)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
