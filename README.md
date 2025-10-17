@@ -8,7 +8,7 @@ This is a minimal Rust WebAssembly project that exposes a `ParserEmitter` object
 ## Prerequisites
 - [Rust](https://www.rust-lang.org/tools/install)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
-- [basic-http-server](https://crates.io/crates/basic-http-server) (for serving the files)
+- [basic-http-server](https://crates.io/crates/basic-http-server) (or simple-http-server)
 
 ## Build Instructions
 
@@ -25,12 +25,13 @@ This is a minimal Rust WebAssembly project that exposes a `ParserEmitter` object
 
 3. **Serve the project locally:**
    ```sh
-   basic-http-server .
+   cd pkg
+   simple-http-server --index --port 8000
    ```
-   This will start a server at [http://localhost:4000](http://localhost:4000).
+   This will start a server at [http://localhost:8000](http://localhost:8000).
 
 4. **Open the demo:**
-   Open your browser and go to [http://localhost:4000/index.html](http://localhost:4000/index.html)
+   Open your browser and go to [http://localhost:8000/index.html](http://localhost:8000/index.html)
 
 ## How it works
 - The `ParserEmitter` object in Rust has two methods:

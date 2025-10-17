@@ -2,6 +2,7 @@
 /* eslint-disable */
 export class ParserEmitter {
   free(): void;
+  [Symbol.dispose](): void;
   constructor();
   parser(input: Uint8Array): void;
   emit(callback: Function): void;
