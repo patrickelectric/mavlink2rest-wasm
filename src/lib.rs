@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use mavlink::{read_versioned_msg, write_versioned_msg, MavHeader, MavlinkVersion};
+use mavlink::{read_versioned_msg, write_versioned_msg, MavHeader, ReadVersion, MavlinkVersion};
 use serde::{Deserialize, Serialize};
 use js_sys::Uint8Array;
 
@@ -34,7 +34,8 @@ impl ParserEmitter {
     pub fn emit(&mut self, callback: &js_sys::Function) -> Result<(), JsValue> {
         while !self.data.is_empty() {
             let mut cursor = std::io::Cursor::new(&self.data);
-            match read_versioned_msg::<mavlink::ardupilotmega::MavMessage, _>(&mut cursor, MavlinkVersion::V2) {
+            let mut peek_reader = mavlink::peek_reader::PeekReader::new(&mut cursor);
+            match read_versioned_msg::<mavlink::ardupilotmega::MavMessage, _>(&mut peek_reader, ReadVersion::Any) {
                 Ok((header, msg)) => {
                     // Get the size of the successfully parsed message
                     let bytes_read = cursor.position() as usize;
@@ -82,22 +83,6 @@ impl ParserEmitter {
             return Ok(array.into());
         }
 
-        if let Ok(content) =
-            json5::from_str::<MAVLinkMessage<mavlink::common::MavMessage>>(&json_string)
-        {
-            let mut data = Vec::new();
-            let header = MavHeader {
-                sequence: self.sequence,
-                system_id: content.header.system_id,
-                component_id: content.header.component_id,
-            };
-            let message = content.message;
-            let _ = write_versioned_msg(&mut data, MavlinkVersion::V2, header, &message);
-            self.sequence += 1;
-            let array = Uint8Array::new_with_length(data.len() as u32);
-            array.copy_from(&data);
-            return Ok(array.into());
-        }
         Ok(JsValue::from_str("[]"))
     }
 }
